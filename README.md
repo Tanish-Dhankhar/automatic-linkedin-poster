@@ -168,7 +168,7 @@ graph TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/automatic-linkedin-poster.git
+git clone https://github.com/Tanish-Dhankhar/automatic-linkedin-poster.git
 cd automatic-linkedin-poster
 
 # Create virtual environment (recommended)
@@ -188,7 +188,7 @@ pip install -r requirements.txt
 
 ```bash
 # Clone with development dependencies
-git clone https://github.com/your-username/automatic-linkedin-poster.git
+git clone https://github.com/Tanish-Dhankhar/automatic-linkedin-poster.git
 cd automatic-linkedin-poster
 
 # Create development environment
@@ -1066,10 +1066,10 @@ We welcome contributions to make the Automatic LinkedIn Poster even better!
 
 ```bash
 # Fork the repository
-git fork https://github.com/your-username/automatic-linkedin-poster
+git fork https://github.com/Tanish-Dhankhar/automatic-linkedin-poster
 
 # Clone your fork
-git clone https://github.com/your-username/automatic-linkedin-poster
+git clone https://github.com/Tanish-Dhankhar/automatic-linkedin-poster
 cd automatic-linkedin-poster
 
 # Create feature branch
@@ -1144,8 +1144,8 @@ SOFTWARE.
 
 ### **Get Help:**
 - 📖 **Documentation**: This comprehensive README
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/automatic-linkedin-poster/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/your-username/automatic-linkedin-poster/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster/discussions)
 - 📧 **Email**: support@automatic-linkedin-poster.com
 
 ### **Stay Updated:**
@@ -1166,7 +1166,7 @@ SOFTWARE.
 
 *Transform your LinkedIn presence with AI-powered content creation*
 
-[![GitHub](https://img.shields.io/github/stars/your-username/automatic-linkedin-poster?style=social)](https://github.com/your-username/automatic-linkedin-poster)
+[![GitHub](https://img.shields.io/github/stars/Tanish-Dhankhar/automatic-linkedin-poster?style=social)](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster)
 [![LinkedIn](https://img.shields.io/badge/Follow-LinkedIn-blue?style=social&logo=linkedin)](https://linkedin.com/company/automatic-linkedin-poster)
 [![Twitter](https://img.shields.io/badge/Follow-Twitter-blue?style=social&logo=twitter)](https://twitter.com/linkedin_poster)
 
