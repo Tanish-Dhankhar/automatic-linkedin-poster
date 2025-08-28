@@ -756,7 +756,7 @@ MIT License - see LICENSE file for details.
 
 <div align="center">
 
-**Made with ❤️ by developers, for developers**
+**Made By Tanish Dhankhar**
 
 *Transform your LinkedIn presence with AI-powered content creation*
 
