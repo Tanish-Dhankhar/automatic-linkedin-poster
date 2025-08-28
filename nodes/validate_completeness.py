@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import sys
 sys.path.append('..')
 from state import WorkflowState
+from .utils import parse_llm_json_response
 
 load_dotenv()
 
@@ -90,14 +91,14 @@ def validate_and_complete(state: WorkflowState) -> WorkflowState:
         print("🔍 Analyzing content completeness...")
         response = llm.invoke(messages)
         
-        # Parse validation response
-        response_text = response.content.strip()
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
-        
-        validation_result = json.loads(response_text)
+        # Parse validation response using robust utility function
+        fallback_result = {
+            "is_complete": False,
+            "missing_fields": ["description", "role"],
+            "clarifying_questions": ["What was your specific role in this activity?", "What did you learn from this experience?"],
+            "validation_notes": "Insufficient information provided"
+        }
+        validation_result = parse_llm_json_response(response.content, fallback_result)
         
         # Update state with validation results
         state['is_complete'] = validation_result.get('is_complete', False)
@@ -108,14 +109,26 @@ def validate_and_complete(state: WorkflowState) -> WorkflowState:
             print("✅ Content is complete and ready for post generation!")
             return state
         
+        # If not complete, check if we're in Gradio mode or CLI mode
+        is_gradio_mode = state.get('gradio_mode', False)
+        
         # If not complete, ask clarifying questions
         print("\n⚠️ Additional information needed for a complete post.")
         print(f"Missing fields: {', '.join(state['missing_fields'])}")
         print("\nPlease answer these questions to enhance your post:\n")
         
-        user_responses = {}
+        # Print questions for both modes
         for i, question in enumerate(state['clarifying_questions'], 1):
             print(f"{i}. {question}")
+        
+        # In Gradio mode, return early without asking for input
+        if is_gradio_mode:
+            print("\n⏸️ Returning to Gradio interface for user input...")
+            return state
+        
+        # CLI mode: continue with interactive input
+        user_responses = {}
+        for i, question in enumerate(state['clarifying_questions'], 1):
             answer = input("   Your answer: ").strip()
             user_responses[f"question_{i}"] = {
                 "question": question,
@@ -151,14 +164,9 @@ def validate_and_complete(state: WorkflowState) -> WorkflowState:
             
             merge_response = llm.invoke(merge_messages)
             
-            # Parse merged data
-            merged_text = merge_response.content.strip()
-            if "```json" in merged_text:
-                merged_text = merged_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in merged_text:
-                merged_text = merged_text.split("```")[1].split("```")[0].strip()
-            
-            updated_details = json.loads(merged_text)
+            # Parse merged data using robust utility function
+            fallback_details = state.get('event_details', {})
+            updated_details = parse_llm_json_response(merge_response.content, fallback_details)
             state['event_details'] = updated_details
             state['is_complete'] = True
             
@@ -174,6 +182,95 @@ def validate_and_complete(state: WorkflowState) -> WorkflowState:
     except Exception as e:
         state['error'] = f"Error in validation: {str(e)}"
         state['error_node'] = "validate_completeness"
+        print(f"❌ Error: {str(e)}")
+        return state
+
+
+def integrate_clarification_answers(state: WorkflowState) -> WorkflowState:
+    """
+    Integrates user's clarification answers into the structured data.
+    Used specifically for Gradio UI workflow continuation.
+    
+    Args:
+        state: Workflow state containing clarification_answers
+        
+    Returns:
+        Updated state with integrated answers and is_complete set to True
+    """
+    print("\n📝 Integrating clarification answers...")
+    
+    try:
+        # Get clarification answers from state
+        clarification_answers = state.get('clarification_answers', {})
+        
+        if not clarification_answers:
+            print("No clarification answers provided, continuing with existing data...")
+            state['is_complete'] = True
+            return state
+        
+        # Initialize Gemini Flash for merging
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-exp",
+            temperature=0.5,
+            google_api_key=os.getenv("GOOGLE_API_KEY")
+        )
+        
+        # Get the original clarifying questions for context
+        original_questions = state.get('clarifying_questions', [])
+        
+        # Create user responses in the expected format
+        user_responses = {}
+        for answer_num, answer in clarification_answers.items():
+            if answer and answer.strip():
+                # Map answer number to question if available
+                question_index = int(answer_num) - 1
+                if 0 <= question_index < len(original_questions):
+                    user_responses[f"question_{answer_num}"] = {
+                        "question": original_questions[question_index],
+                        "answer": answer.strip()
+                    }
+                else:
+                    user_responses[f"question_{answer_num}"] = {
+                        "question": f"Question {answer_num}",
+                        "answer": answer.strip()
+                    }
+        
+        # Create prompt to merge responses
+        merge_prompt = """You are helping update LinkedIn post data with user's responses to clarifying questions.
+        
+        Take the user's responses and intelligently merge them into the appropriate fields in the event_details.
+        Don't overwrite existing good content, but enhance and complete it.
+        
+        Output the updated event_details JSON object only."""
+        
+        merge_message = f"""Current event details:
+        {json.dumps(state.get('event_details', {}), indent=2)}
+        
+        User responses to clarifying questions:
+        {json.dumps(user_responses, indent=2)}
+        
+        Please merge these responses into the event_details appropriately."""
+        
+        merge_messages = [
+            SystemMessage(content=merge_prompt),
+            HumanMessage(content=merge_message)
+        ]
+        
+        print("🔄 Merging answers with existing data...")
+        merge_response = llm.invoke(merge_messages)
+        
+        # Parse merged data using robust utility function
+        fallback_details = state.get('event_details', {})
+        updated_details = parse_llm_json_response(merge_response.content, fallback_details)
+        state['event_details'] = updated_details
+        state['is_complete'] = True
+        
+        print("✅ Clarification answers integrated successfully!")
+        return state
+        
+    except Exception as e:
+        state['error'] = f"Error integrating clarification answers: {str(e)}"
+        state['error_node'] = "integrate_clarification_answers"
         print(f"❌ Error: {str(e)}")
         return state
 

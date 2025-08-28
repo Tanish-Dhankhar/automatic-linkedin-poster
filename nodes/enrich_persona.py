@@ -23,7 +23,7 @@ def enrich_with_persona(state: WorkflowState) -> WorkflowState:
         state: Current workflow state with structured data and persona
         
     Returns:
-        Updated state with persona context added
+        Updated state with relevant persona context added
     """
     print("\n" + "-"*40)
     print("🤖 LLM Stage 3: Persona Enrichment")
@@ -41,52 +41,92 @@ def enrich_with_persona(state: WorkflowState) -> WorkflowState:
             google_api_key=os.getenv("GOOGLE_API_KEY")
         )
         
-        # 🔑 Use the complete persona data directly
+        # Use the complete persona data directly
         persona_data = state.get('persona_data', {})
         
-        # System prompt for persona enrichment
-        system_prompt = """You are an expert at personalizing LinkedIn content based on user personas.
-        
-Your task is to analyze the post content and the complete persona file to identify:
-1. The most appropriate tone and writing style for this post
-2. Relevant experiences or background that connect to the post topic
-3. How this post aligns with the user's career goals and values
+        # System prompt for selective persona enrichment
+        system_prompt = """You are an expert LinkedIn content strategist who specializes in extracting only the RELEVANT persona elements needed for authentic post creation.
 
-Be selective - only pull in persona elements that genuinely enhance the post's authenticity.
-Don't force connections that aren't natural.
+Your task is to analyze the user's persona data and the post content, then extract ONLY the persona elements that are directly relevant to this specific post. Be selective and focused - don't include everything, only what enhances this particular post's authenticity and engagement.
 
-Output JSON format:
+ANALYSIS APPROACH:
+1. Look at the post content/topic and identify what persona elements would naturally relate
+2. Extract only the relevant information from these persona file sections:
+   - basic_info (if relevant to context)
+   - about_me (key relevant parts)
+   - education (if educational context relates)
+   - experience (work/research experience that connects)
+   - past_experience (if relevant achievements/activities)
+   - skills (technical skills that relate to the post)
+   - certifications_and_courses (if relevant to topic)
+   - interests (if they connect to the post)
+   - values_and_goals (values demonstrated or goals aligned)
+   - communication_preferences (always relevant for tone/style)
+   - achievements (if they add credibility to this post)
+
+3. Be selective - only include persona elements that genuinely enhance THIS post
+4. Extract the exact information as it appears in the persona file
+5. Don't invent or add information not present in the persona
+
+Output focused JSON format with only relevant extracted information:
 {
-    "persona_context": {
-        "tone": "specific tone description based on persona and content",
-        "relevant_experience": "specific background/experience that relates to this post",
-        "career_goal_alignment": "how this post/achievement aligns with their goals",
-        "values_reflected": "which personal values this demonstrates",
-        "writing_style_notes": "specific style guidance for this post"
+    "relevant_persona_context": {
+        "basic_info": {
+            // Only include if relevant (name for voice, role for credibility, etc.)
+        },
+        "relevant_background": "relevant parts from about_me that connect to this post",
+        "relevant_education": {
+            // Only if educational background relates to post topic
+        },
+        "relevant_experience": [
+            {
+                // Only experience/internships/research that relates to this post
+            }
+        ],
+        "relevant_skills": [
+            // Only skills that are relevant to this post topic
+        ],
+        "relevant_achievements": [
+            // Only achievements that add credibility to this specific post
+        ],
+        "relevant_values": [
+            // Only values that this post demonstrates or aligns with
+        ],
+        "communication_style": {
+            // Always include - how they communicate
+        }
     },
-    "persona_suggestions": {
-        "skills_to_highlight": ["skill1", "skill2"],
-        "achievements_to_reference": "relevant past achievement if applicable",
-        "professional_identity": "how to position themselves"
+    "post_enhancement_context": {
+        "why_relevant": "explanation of how their background makes this post authentic",
+        "credibility_factors": ["what gives them authority to speak on this topic"],
+        "unique_perspective": "what makes their viewpoint unique based on their background",
+        "tone_guidance": "specific tone/style for this post based on their preferences"
     }
-}"""
+}
+
+IMPORTANT: Only extract information that actually exists in the persona file. Don't create or invent details."""
         
-        # Post context (still selective)
+        # Post context
         post_context = {
             "post_metadata": state.get('post_metadata', {}),
             "event_details": state.get('event_details', {})
         }
         
-        # 🔑 Send full persona JSON instead of filtered summary
-        user_message = f"""Analyze this LinkedIn post content with the complete persona file.
+        # User message for focused analysis
+        user_message = f"""Analyze this post content and extract ONLY the relevant persona elements that would enhance this specific LinkedIn post.
 
 POST CONTENT:
 {json.dumps(post_context, indent=2)}
 
-USER PERSONA (Full JSON):
+USER PERSONA FILE:
 {json.dumps(persona_data, indent=2)}
 
-Please identify the most relevant persona elements that would make this post more authentic and engaging."""
+INSTRUCTIONS:
+1. Be selective - only extract persona elements that directly relate to this post topic
+2. Use exact information from the persona file - don't modify or add details
+3. Focus on what makes this post authentic and credible for this specific user
+4. Include communication preferences since they're always relevant for tone
+5. Don't include persona sections that don't relate to this particular post"""
         
         # Get enrichment response
         messages = [
@@ -94,35 +134,57 @@ Please identify the most relevant persona elements that would make this post mor
             HumanMessage(content=user_message)
         ]
         
-        print("🎯 Analyzing persona relevance...")
+        print("🎯 Extracting relevant persona elements...")
         response = llm.invoke(messages)
         
-        # Parse response
-        response_text = response.content.strip()
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
+        # Parse response using robust utility function
+        fallback_data = {
+            "relevant_persona_context": {},
+            "post_enhancement_context": {
+                "why_relevant": "User's background supports this topic",
+                "credibility_factors": ["Professional experience"],
+                "unique_perspective": "Personal experience and expertise",
+                "tone_guidance": "Professional and authentic"
+            }
+        }
         
-        enrichment_data = json.loads(response_text)
+        # Import the utility function
+        from .utils import parse_llm_json_response
+        enrichment_data = parse_llm_json_response(response.content, fallback_data)
         
-        # Update state with persona context
-        state['persona_context'] = enrichment_data.get('persona_context', {})
+        # Store relevant persona context in state
+        state['persona_context'] = enrichment_data
         
-        # Also store suggestions for the post generation phase
-        if 'persona_suggestions' in enrichment_data:
-            if not state.get('event_details'):
-                state['event_details'] = {}
-            state['event_details']['persona_suggestions'] = enrichment_data['persona_suggestions']
+        print("✅ Relevant persona context integrated!")
         
-        print("✅ Persona context integrated successfully!")
-        print(f"   • Tone: {state['persona_context'].get('tone', 'Not specified')}")
-        print(f"   • Career Alignment: {'Yes' if state['persona_context'].get('career_goal_alignment') else 'No'}")
+        # Display what was extracted
+        relevant_context = enrichment_data.get('relevant_persona_context', {})
+        enhancement_context = enrichment_data.get('post_enhancement_context', {})
         
-        # Show name if available
-        name = persona_data.get('basic_info', {}).get('full_name', '') or persona_data.get('name', '')
-        if name:
-            print(f"   • Writing as: {name}")
+        extracted_sections = []
+        if relevant_context.get('basic_info'):
+            extracted_sections.append('basic_info')
+        if relevant_context.get('relevant_background'):
+            extracted_sections.append('background')
+        if relevant_context.get('relevant_education'):
+            extracted_sections.append('education')
+        if relevant_context.get('relevant_experience'):
+            extracted_sections.append('experience')
+        if relevant_context.get('relevant_skills'):
+            extracted_sections.append('skills')
+        if relevant_context.get('relevant_achievements'):
+            extracted_sections.append('achievements')
+        if relevant_context.get('relevant_values'):
+            extracted_sections.append('values')
+        if relevant_context.get('communication_style'):
+            extracted_sections.append('communication_style')
+        
+        print(f"   • Extracted sections: {', '.join(extracted_sections)}")
+        
+        if enhancement_context.get('unique_perspective'):
+            print(f"   • Unique angle: Yes")
+        if enhancement_context.get('credibility_factors'):
+            print(f"   • Credibility elements: {len(enhancement_context['credibility_factors'])}")
         
         return state
         

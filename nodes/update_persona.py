@@ -15,6 +15,7 @@ import sys
 sys.path.append('..')
 from state import WorkflowState
 from credentials_loader import get_persona_path
+from .utils import parse_llm_json_response
 
 load_dotenv()
 
@@ -162,14 +163,18 @@ def update_persona_from_post(state: WorkflowState) -> WorkflowState:
         print("🔍 Analyzing content for persona updates...")
         response = llm.invoke(messages)
 
-        # Parse the extraction results
-        response_text = response.content.strip()
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
-        
-        extracted_updates = json.loads(response_text)
+        # Parse the extraction results using robust utility function
+        fallback_updates = {
+            "achievements": None,
+            "experiences": None,
+            "skills": None,
+            "education": None,
+            "interests": None,
+            "values": None,
+            "goals": None,
+            "network_updates": None
+        }
+        extracted_updates = parse_llm_json_response(response.content, fallback_updates)
 
         # Apply updates to persona
         updated_persona = apply_persona_updates(current_persona, extracted_updates)

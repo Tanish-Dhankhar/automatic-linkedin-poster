@@ -28,10 +28,6 @@
 - [🔄 Workflow Details](#-workflow-details)
 - [🎨 Persona Customization](#-persona-customization)
 - [📊 Google Sheets Integration](#-google-sheets-integration)
-- [🔐 Security & Best Practices](#-security--best-practices)
-- [🔧 Troubleshooting](#-troubleshooting)
-- [🚀 Advanced Usage](#-advanced-usage)
-- [📈 Performance Tips](#-performance-tips)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 
@@ -278,16 +274,9 @@ nano user_info/persona.json  # or use your preferred editor
 
 ### **Step 3: Run Setup Wizard**
 
-**Option A: Command Line Setup (Traditional)**
 ```bash
 python setup.py
 ```
-
-**Option B: Web-Based Setup (Gradio Interface)**
-```bash
-python setup_gradio.py
-```
-This opens a user-friendly web interface in your browser for easier configuration.
 
 The interactive setup will guide you through:
 
@@ -316,9 +305,16 @@ The interactive setup will guide you through:
 
 ### **Creating Your First Post**
 
+**Option A: Command Line Interface (CLI)**
 ```bash
 python main.py
 ```
+
+**Option B: Web Interface (Recommended)**
+```bash
+python app_gradio.py
+```
+This opens a user-friendly web interface in your browser at `http://localhost:7860` with an intuitive GUI for creating posts.
 
 #### **Interactive Workflow:**
 
@@ -407,9 +403,9 @@ AUTOMATIC-LINKEDIN-POSTER/
 ├── 📱 Core Application
 │   ├── main.py                 # Main workflow orchestrator
 │   ├── setup.py               # CLI configuration wizard
-│   ├── setup_gradio.py        # Web-based setup interface
+│   ├── app_gradio.py          # Web-based interface for content creation
 │   ├── state.py               # Workflow state definitions
-│   ├── backgrounds.py         # Auto-posting service
+│   ├── background.py          # Auto-posting service
 │   └── credentials_loader.py  # Credential management utilities
 │
 ├── 🧩 Workflow Nodes
@@ -422,7 +418,8 @@ AUTOMATIC-LINKEDIN-POSTER/
 │       ├── refine_post.py          # Stage 5: Humanization & refinement
 │       ├── user_approval.py        # User review & revision handling
 │       ├── save_to_sheet.py        # Google Sheets integration
-│       └── update_persona.py       # Stage 8: Persona auto-update
+│       ├── update_persona.py       # Stage 8: Persona auto-update
+│       └── utils.py                # Utility functions and helpers
 │
 ├── ⚙️ Configuration Templates
 │   └── sample_user_info/
@@ -721,422 +718,18 @@ python -c "from nodes.save_to_sheet import view_scheduled_posts; view_scheduled_
 python -c "from nodes.save_to_sheet import archive_old_posts; archive_old_posts(days=30)"
 ```
 
----
-
-## 🔐 Security & Best Practices
-
-### **Credential Management:**
-
-#### **Environment Variables (.env):**
-```bash
-# ✅ GOOD: Use environment variables for API keys
-GOOGLE_API_KEY=your_key_here
-
-# ❌ BAD: Never hardcode in source files
-# api_key = "hardcoded_key_here"  # DON'T DO THIS
-```
-
-#### **File Permissions:**
-```bash
-# Set restrictive permissions on sensitive files
-chmod 600 credentials.json
-chmod 600 .env
-chmod 600 *.json  # All JSON files with potential secrets
-```
-
-#### **Git Security:**
-```gitignore
-# Essential .gitignore entries
-credentials.json
-.env
-*.json
-!persona_sample.json
-!package.json
-__pycache__/
-.venv/
-*.log
-```
-
-### **API Security:**
-
-#### **LinkedIn Token Management:**
-```python
-# ✅ Token rotation strategy
-- Rotate tokens every 30-60 days
-- Monitor token expiration
-- Use refresh tokens when possible
-- Implement token validation checks
-```
-
-#### **Google Cloud Security:**
-```python
-# ✅ Service Account Best Practices
-- Use service accounts (not personal accounts)
-- Grant minimal required permissions
-- Regularly audit service account access
-- Enable audit logging
-```
-
-### **Data Privacy:**
-
-```python
-# ✅ Content Security
-- Never log sensitive post content
-- Implement local content encryption
-- Regular credential rotation
-- Secure backup strategies
-```
-
-### **Network Security:**
-
-```bash
-# ✅ HTTPS Everywhere
-- All API calls use HTTPS
-- Certificate validation enabled
-- Timeout configurations set
-- Retry logic with exponential backoff
-```
-
----
-
-## 🔧 Troubleshooting
-
-### **Common Issues & Solutions:**
-
-#### **🔑 Authentication Issues**
-
-**Problem:** LinkedIn token invalid
-```bash
-Error: LinkedIn authentication failed
-```
-
-**Solutions:**
-1. Check token expiration date
-2. Verify token scopes include `w_member_social`
-3. Regenerate token in LinkedIn Developer Console
-4. Update `credentials.json` with new token
-
-**Problem:** Google Sheets access denied
-```bash
-Error: The caller does not have permission
-```
-
-**Solutions:**
-1. Share spreadsheet with service account email
-2. Grant "Editor" permissions (not "Viewer")
-3. Verify service account JSON file is valid
-4. Check Google Sheets API is enabled
-
-#### **🤖 AI/LLM Issues**
-
-**Problem:** Gemini API rate limit exceeded
-```bash
-Error: Rate limit exceeded for Gemini Flash
-```
-
-**Solutions:**
-1. Wait and retry (automatic exponential backoff)
-2. Check your Google AI Studio quota
-3. Consider upgrading to paid tier
-4. Implement request queuing
-
-**Problem:** Poor content quality
-```bash
-Generated content doesn't match my style
-```
-
-**Solutions:**
-1. Update persona.json with more specific preferences
-2. Add examples of your preferred writing style
-3. Use the revision feature with specific feedback
-4. Adjust temperature settings in generate_post.py
-
-#### **📊 Google Sheets Issues**
-
-**Problem:** Sheet not found or inaccessible
-```bash
-Error: Unable to access spreadsheet
-```
-
-**Solutions:**
-1. Verify spreadsheet ID in credentials.json
-2. Check sheet name spelling (case-sensitive)
-3. Ensure spreadsheet isn't deleted
-4. Confirm service account has access
-
-**Problem:** Data formatting issues
-```bash
-Error: Invalid date format in to_be_posted_at
-```
-
-**Solutions:**
-1. Use format: YYYY-MM-DD HH:MM
-2. Check system timezone settings
-3. Validate date input during collection
-4. Update date parsing in save_to_sheet.py
-
-### **Debug Mode:**
-
-```bash
-# Enable verbose logging
-export LANGSMITH_TRACING=true
-python main.py
-
-# Check system health
-python -c "from setup import LinkedInSetup; LinkedInSetup.test_connection()"
-
-# Validate configuration
-python setup.py --validate-only
-```
-
-### **Log Analysis:**
-
-```bash
-# View recent errors
-tail -f logs/linkedin_poster.log
-
-# Search for specific issues
-grep "ERROR" logs/*.log
-
-# Monitor API calls
-grep "API_CALL" logs/*.log | tail -20
-```
-
----
-
-## 🚀 Advanced Usage
-
-### **Custom Workflow Modifications:**
-
-#### **Adding Custom Validation:**
-```python
-# Create custom validation node
-def custom_content_validator(state: WorkflowState) -> WorkflowState:
-    post_content = state.get('draft_post', '')
-    
-    # Custom validation rules
-    if len(post_content) > 3000:
-        state['error'] = "Post too long for LinkedIn"
-        return state
-    
-    if not any(tag in post_content for tag in ['#', '@']):
-        state['validation_warnings'] = ["Consider adding hashtags or mentions"]
-    
-    return state
-```
-
-#### **Custom Persona Logic:**
-```python
-# Add industry-specific customization
-def tech_industry_enhancer(state: WorkflowState) -> WorkflowState:
-    if state['persona_data']['industry'] == 'Technology':
-        # Add tech-specific enhancements
-        state['tech_enhancements'] = {
-            'include_github_links': True,
-            'technical_depth': 'moderate',
-            'use_tech_hashtags': True
-        }
-    return state
-```
-
-### **Batch Processing:**
-
-```python
-# Process multiple posts from CSV
-import pandas as pd
-
-def batch_create_posts(csv_file: str):
-    df = pd.read_csv(csv_file)
-    
-    for _, row in df.iterrows():
-        initial_state = WorkflowState()
-        initial_state['raw_input'] = row['content']
-        initial_state['scheduled_time'] = row['schedule']
-        
-        # Process through workflow
-        result = workflow.invoke(initial_state)
-        print(f"Processed: {row['title']}")
-```
-
-### **Content Templates:**
-
-```python
-# Define reusable content templates
-TEMPLATES = {
-    'project_showcase': {
-        'structure': '🚀 Project → 🔧 Technology → 💡 Learning → 🤝 Team',
-        'tone': 'excited_professional',
-        'hashtags': ['#TechProject', '#Learning', '#Development']
-    },
-    'career_milestone': {
-        'structure': '🎉 Achievement → 🧠 Reflection → 🙏 Gratitude → 🔮 Future',
-        'tone': 'humble_grateful', 
-        'hashtags': ['#CareerGrowth', '#Milestone', '#Grateful']
-    }
-}
-```
-
-### **Analytics & Monitoring:**
-
-```python
-# Track content performance
-def analyze_post_performance():
-    posts = load_posts_from_sheet()
-    
-    metrics = {
-        'total_posts': len(posts),
-        'avg_length': sum(len(p['content']) for p in posts) / len(posts),
-        'most_common_hashtags': extract_hashtag_frequency(posts),
-        'posting_patterns': analyze_timing_patterns(posts)
-    }
-    
-    return metrics
-```
-
----
-
-## 📈 Performance Tips
-
-### **Optimization Strategies:**
-
-#### **1. API Efficiency**
-```python
-# ✅ Implement request batching
-- Batch Google Sheets operations
-- Use connection pooling for HTTP requests
-- Cache frequently accessed data
-- Implement intelligent retry logic
-```
-
-#### **2. Content Quality**
-```python
-# ✅ Enhance AI prompts
-- Use specific, detailed prompts
-- Include examples in system messages
-- Implement few-shot learning
-- Fine-tune temperature settings
-```
-
-#### **3. Workflow Speed**
-```python
-# ✅ Parallel processing where possible
-- Async API calls
-- Concurrent validation steps
-- Background file processing
-- Preload persona data
-```
-
-### **Resource Management:**
-
-```python
-# Monitor resource usage
-def monitor_usage():
-    return {
-        'api_calls_remaining': check_rate_limits(),
-        'memory_usage': get_memory_stats(),
-        'processing_time': track_execution_time(),
-        'success_rate': calculate_success_rate()
-    }
-```
-
-### **Cost Optimization:**
-
-| Service | Cost Factor | Optimization |
-|---------|-------------|-------------|
-| **Gemini API** | Token usage | Optimize prompt length, use Flash model |
-| **Google Sheets** | API calls | Batch operations, cache reads |
-| **LinkedIn API** | Rate limits | Intelligent queuing, retry logic |
-| **Compute** | Processing time | Async operations, efficient algorithms |
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions to make the Automatic LinkedIn Poster even better!
-
-### **Ways to Contribute:**
-
-- 🐛 **Bug Reports**: Found an issue? Please open an issue with detailed reproduction steps
-- 💡 **Feature Requests**: Have an idea? We'd love to hear about it
-- 📝 **Documentation**: Help improve our guides and examples
-- 🔧 **Code**: Submit pull requests for bug fixes or new features
-- 🧪 **Testing**: Help test new features and report compatibility issues
-
-### **Development Setup:**
-
-```bash
-# Fork the repository
-git fork https://github.com/Tanish-Dhankhar/automatic-linkedin-poster
-
-# Clone your fork
-git clone https://github.com/Tanish-Dhankhar/automatic-linkedin-poster
-cd automatic-linkedin-poster
-
-# Create feature branch
-git checkout -b feature/amazing-new-feature
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-pytest tests/
-
-# Submit pull request
-git push origin feature/amazing-new-feature
-```
-
-### **Code Style:**
-```bash
-# Format code
-black .
-
-# Check linting
-flake8 .
-
-# Type checking
-mypy .
-```
-
-### **Testing:**
-```bash
-# Run all tests
-pytest
-
-# Run specific test category
-pytest tests/unit/
-pytest tests/integration/
-
-# Run with coverage
-pytest --cov=. --cov-report=html
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
 ## 📄 License
 
-```
-MIT License
-
-Copyright (c) 2025 Automatic LinkedIn Poster
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+MIT License - see LICENSE file for details.
 
 ---
 
@@ -1146,7 +739,8 @@ SOFTWARE.
 - 📖 **Documentation**: This comprehensive README
 - 🐛 **Issues**: [GitHub Issues](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster/discussions)
-- 📧 **Email**: support@automatic-linkedin-poster.com
+- 📧 **Email**: [dhankhar1108@gmail.com](mailto:dhankhar1108@gmail.com)
+- 👤 **LinkedIn**: [Tanish Dhankhar](https://www.linkedin.com/in/tanish-dhankhar-623aa6310/)
 
 ### **Stay Updated:**
 - ⭐ **Star this repository** to show support
@@ -1167,7 +761,7 @@ SOFTWARE.
 *Transform your LinkedIn presence with AI-powered content creation*
 
 [![GitHub](https://img.shields.io/github/stars/Tanish-Dhankhar/automatic-linkedin-poster?style=social)](https://github.com/Tanish-Dhankhar/automatic-linkedin-poster)
-[![LinkedIn](https://img.shields.io/badge/Follow-LinkedIn-blue?style=social&logo=linkedin)](https://linkedin.com/company/automatic-linkedin-poster)
-[![Twitter](https://img.shields.io/badge/Follow-Twitter-blue?style=social&logo=twitter)](https://twitter.com/linkedin_poster)
+[![LinkedIn](https://img.shields.io/badge/Follow-LinkedIn-blue?style=social&logo=linkedin)](https://www.linkedin.com/in/tanish-dhankhar-623aa6310/)
+[![Gmail](https://img.shields.io/badge/Contact-Gmail-red?style=social&logo=gmail)](mailto:dhankhar1108@gmail.com)
 
 </div>

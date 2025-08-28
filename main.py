@@ -5,7 +5,8 @@ Uses LangGraph to manage the multi-stage LLM pipeline for post creation.
 
 import sys
 import os
-from typing import Dict, Any
+import uuid
+from typing import Dict, Any, Optional
 from pathlib import Path
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
@@ -15,16 +16,21 @@ from credentials_loader import load_credentials
 # Import state management
 from state import WorkflowState
 
-# Import all node functions
-from nodes.input_collector import collect_user_input
-from nodes.structure_input import structure_user_input
-from nodes.validate_completeness import validate_and_complete
-from nodes.enrich_persona import enrich_with_persona
-from nodes.generate_post import generate_linkedin_post
-from nodes.refine_post import refine_and_humanize_post
-from nodes.user_approval import get_user_approval
-from nodes.save_to_sheet import save_post_to_sheet
-from nodes.update_persona import update_persona_from_post
+# Import all node functions - with validation
+try:
+    from nodes.input_collector import collect_user_input
+    from nodes.structure_input import structure_user_input
+    from nodes.validate_completeness import validate_and_complete
+    from nodes.enrich_persona import enrich_with_persona
+    from nodes.generate_post import generate_linkedin_post
+    from nodes.refine_post import refine_and_humanize_post
+    from nodes.user_approval import get_user_approval
+    from nodes.save_to_sheet import save_post_to_sheet
+    from nodes.update_persona import update_persona_from_post
+except ImportError as e:
+    print(f"❌ Error importing node modules: {e}")
+    print("Please ensure all node files are present in the 'nodes/' directory.")
+    sys.exit(1)
 
 # Load environment variables
 load_dotenv()
@@ -221,7 +227,7 @@ def display_summary(state: Dict[str, Any]):
         
         print(f"\n📌 Next Steps:")
         print(f"   1. Your post has been saved to Google Sheets")
-        print(f"   2. Run 'python backgrounds.py' to start the auto-poster")
+        print(f"   2. Run 'python background.py' to start the auto-poster")
         print(f"   3. The post will be published at the scheduled time")
         if state.get('persona_updated'):
             print(f"   4. Your persona has been automatically updated with new information")

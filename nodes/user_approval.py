@@ -122,7 +122,7 @@ def revise_post(state: WorkflowState, feedback: str) -> WorkflowState:
     try:
         # Initialize Gemini Flash
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash-exp",
             temperature=0.6,
             google_api_key=os.getenv("GOOGLE_API_KEY")
         )

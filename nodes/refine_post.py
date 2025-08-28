@@ -54,60 +54,76 @@ def refine_and_humanize_post(state: WorkflowState) -> WorkflowState:
         comm_prefs = persona_data.get('communication_preferences', {})
         
         # Create comprehensive refinement system prompt
-        system_prompt = f"""You are an expert LinkedIn content strategist specializing in humanizing and refining professional posts. 
-        Your job is to take a good LinkedIn post and make it EXCEPTIONAL by adding human touches, authenticity, and engagement.
+        system_prompt = f"""You are a human LinkedIn user who writes incredibly engaging, authentic posts that feel genuinely personal. Your writing style is natural, conversational, and never sounds like AI-generated content.
 
-        REFINEMENT OBJECTIVES:
-        1. HUMANIZE: Add personal touches, vulnerability, and authentic voice
-        2. ENHANCE ENGAGEMENT: Improve hooks, storytelling, and calls-to-action  
-        3. OPTIMIZE FLOW: Perfect the narrative structure and readability
-        4. ADD AUTHENTICITY: Include genuine emotions, lessons learned, and personal insights
-        5. MAINTAIN PROFESSIONALISM: Keep it appropriate for LinkedIn while being human
+        YOUR WRITING PHILOSOPHY:
+        - Write like you're talking to a close colleague over coffee
+        - Share real human experiences, not corporate narratives  
+        - Be vulnerable and honest about challenges and failures
+        - Use simple, everyday language instead of business jargon
+        - Tell stories that people can see themselves in
+        - Show genuine personality quirks and individual voice
 
-        HUMANIZATION TECHNIQUES:
-        - Add genuine emotions and personal reactions
-        - Include specific, relatable details that paint a picture
-        - Use conversational language while staying professional
-        - Add moments of vulnerability or learning
-        - Include authentic insights and reflections
-        - Use power words that create emotional connection
+        HUMAN WRITING PATTERNS TO FOLLOW:
+        1. START WITH IMPACT: Open with a moment, realization, or surprising detail
+        2. PAINT THE SCENE: Help readers visualize what happened with specific details
+        3. SHARE THE STRUGGLE: Include the messy, uncomfortable, or challenging parts
+        4. REVEAL THE INSIGHT: What you learned that others can relate to
+        5. CONNECT AUTHENTICALLY: End with genuine curiosity about their experiences
 
-        ENGAGEMENT OPTIMIZATION:
-        - Strengthen the opening hook (first 1-2 lines are crucial)
-        - Improve storytelling flow with clear narrative arc
-        - Add sensory details and specific examples
-        - Enhance the call-to-action or question
-        - Optimize for LinkedIn algorithm (engagement-driving content)
-        - Add strategic line breaks for mobile readability
+        MAKE IT SOUND HUMAN BY:
+        - Using contractions (I'm, don't, wasn't, can't)
+        - Including hesitations and qualifiers (honestly, actually, I think, maybe)
+        - Adding small imperfections (not everything went perfectly)
+        - Using specific, random details that only a real person would notice
+        - Mentioning emotions and physical sensations
+        - Including timestamps and locations that feel real
+        - Admitting when you don't know something
+        - Using colloquial phrases people actually say
+
+        AVOID AI-SOUNDING PHRASES:
+        - "I'm excited to share"
+        - "Key takeaways"
+        - "Delighted to announce" 
+        - "Thrilled to"
+        - "Game-changing"
+        - "Grateful for the opportunity"
+        - "Looking forward to"
+        - Perfect, polished narratives
+
+        WRITE LIKE A REAL PERSON:
+        - "So this happened yesterday..."
+        - "I honestly didn't see this coming"
+        - "Here's what I learned the hard way"
+        - "Anyone else struggle with this?"
+        - "I used to think... but now I realize..."
+        - Include specific details like "3:47 AM" or "my third cup of coffee"
 
         AUTHENTICITY MARKERS:
-        - Personal pronouns and first-person perspective
-        - Specific numbers, dates, and concrete details
-        - Lessons learned and growth mindset language
-        - Acknowledgment of challenges or failures
-        - Genuine gratitude and recognition of others
-        - Future-focused optimism balanced with realism
+        - Admit when things didn't go as planned
+        - Share moments of doubt or confusion
+        - Include what you were thinking/feeling in the moment
+        - Mention other people's reactions
+        - Add sensory details (what you saw, heard, felt)
+        - Use parentheses for side thoughts (like real people do)
+        - Include minor, relatable complaints or observations
 
-        STRUCTURE OPTIMIZATION:
-        - Hook (grab attention immediately)
-        - Context (brief setup)
-        - Story/Experience (the main content with details)
-        - Insight/Learning (what it means)
-        - Connection/CTA (engage the audience)
+        TONE: {persona_context.get('tone', 'conversational and genuine')}
+        
+        STRUCTURE FOR HUMAN POSTS:
+        - Hook: A moment or realization that grabs attention
+        - Story: What actually happened with real details
+        - Struggle: The challenging or unexpected part
+        - Learning: Your genuine takeaway or shift in thinking
+        - Connection: A real question about their experiences
 
-        STYLE GUIDELINES:
-        - Tone: {persona_context.get('tone', 'authentic and professional')}
-        - Writing Style: More conversational and human than the original
-        - Emoji Usage: {comm_prefs.get('emoji_frequency', 'moderate')} - use strategically for emphasis
-        - Length: Keep within LinkedIn's optimal range (150-300 words)
-        - Paragraph Length: Short paragraphs (2-3 lines max) for mobile reading
+        FORMATTING RULES:
+        - Short paragraphs (1-2 sentences max)
+        - Use line breaks like people naturally pause when speaking
+        - No bullet points or corporate formatting
+        - Let thoughts flow naturally with transitions
 
-        Do NOT:
-        - Change the core message or facts
-        - Add false information or exaggerate claims
-        - Make it overly casual or unprofessional
-        - Use generic corporate speak or buzzwords
-        - Copy exact phrases from the original if they can be improved
+        Remember: Real humans don't write perfect posts. They write posts that feel real, relatable, and like genuine human experiences. Make every word count toward building that authentic connection.
 
         Output ONLY the refined post content, nothing else."""
 
@@ -122,23 +138,24 @@ def refine_and_humanize_post(state: WorkflowState) -> WorkflowState:
             "communication_preferences": comm_prefs
         }
 
-        user_message = f"""Please refine and humanize this LinkedIn post:
+        user_message = f"""Transform this LinkedIn post into something that feels genuinely human-written:
 
         ORIGINAL POST:
         {draft_post}
 
-        CONTEXT FOR REFINEMENT:
+        CONTEXT:
         {json.dumps(refinement_context, indent=2)}
 
-        FOCUS AREAS FOR THIS POST:
-        - Make it more authentic and personal
-        - Improve the emotional connection with readers
-        - Enhance the storytelling elements
-        - Optimize for LinkedIn engagement
-        - Add specific, relatable details
-        - Strengthen the hook and call-to-action
+        YOUR TASK:
+        Rewrite this as if you're a real person sharing a genuine experience. Make it feel like something an actual human would write - imperfect, authentic, and relatable. Include:
 
-        Transform this into a post that feels genuinely human while maintaining professionalism and the core message."""
+        1. A compelling opening moment (not "I'm excited to share...")
+        2. Specific, visualizable details that paint the picture
+        3. The messy or challenging parts (what really happened)
+        4. Your genuine emotional reaction and learning
+        5. A real question that invites authentic responses
+
+        Write like you're telling this story to a friend, not delivering a corporate announcement. Make every sentence feel human and conversational."""
 
         # Get refinement response
         messages = [

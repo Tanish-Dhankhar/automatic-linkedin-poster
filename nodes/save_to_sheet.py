@@ -63,7 +63,7 @@ def save_post_to_sheet(state: WorkflowState) -> WorkflowState:
             if len(values) > 1:  # Skip header row
                 # Get the last post number
                 last_row = values[-1]
-                if last_row and last_row[0].isdigit():
+                if last_row and len(last_row) > 0 and last_row[0].isdigit():
                     post_number = int(last_row[0]) + 1
                 else:
                     post_number = len(values)  # Fallback to row count

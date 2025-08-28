@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import sys
 sys.path.append('..')
 from state import WorkflowState, PostMetadata, EventDetails
+from .utils import parse_llm_json_response
 
 load_dotenv()
 
@@ -88,15 +89,12 @@ def structure_user_input(state: WorkflowState) -> WorkflowState:
         print("📝 Processing raw input...")
         response = llm.invoke(messages)
         
-        # Parse JSON response
-        response_text = response.content.strip()
-        # Clean up response if it has markdown code blocks
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
-        
-        structured_data = json.loads(response_text)
+        # Parse JSON response using robust utility function
+        fallback_data = {
+            "post_metadata": {},
+            "event_details": {}
+        }
+        structured_data = parse_llm_json_response(response.content, fallback_data)
         
         # Update state with structured data
         state['post_metadata'] = structured_data.get('post_metadata', {})

@@ -4,6 +4,7 @@ Input Collector Node - Gathers initial user input for LinkedIn post creation.
 
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import sys
 sys.path.append('..')
@@ -70,12 +71,20 @@ def collect_user_input(state: WorkflowState) -> WorkflowState:
                 if path.upper() == 'DONE':
                     break
                 if path:
-                    # Validate path exists
-                    if Path(path).exists():
-                        media_paths.append(path)
-                        print(f"✅ Added: {path}")
-                    else:
-                        print(f"⚠️ File not found: {path}")
+                    try:
+                        # Validate path exists and is accessible
+                        path_obj = Path(path)
+                        if path_obj.exists() and path_obj.is_file():
+                            # Check if file is readable
+                            if os.access(path, os.R_OK):
+                                media_paths.append(str(path_obj.absolute()))
+                                print(f"✅ Added: {path}")
+                            else:
+                                print(f"⚠️ File not readable: {path}")
+                        else:
+                            print(f"⚠️ File not found or not a file: {path}")
+                    except (OSError, ValueError) as e:
+                        print(f"⚠️ Invalid path: {path} - {e}")
         
         # Collect scheduling information
         print("\n" + "-"*40)

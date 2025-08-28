@@ -29,5 +29,10 @@ python-dateutil>=2.8.2
 # For background process
 schedule>=1.2.0
 
-# For Gradio setup interface
+# For Gradio setup interface and web UI
 gradio>=4.0.0
+pandas>=1.5.0
+
+# Additional dependencies for web interface
+uvicorn>=0.20.0
+fastapi>=0.100.0
